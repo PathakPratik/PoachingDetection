@@ -1,11 +1,12 @@
 import socket
 import struct
 import threading
+import constants
 
-MCAST_GRP = '224.1.1.1'
-MCAST_PORT = 5007
+MCAST_GRP = constants.MCAST_GRP
+MCAST_PORT = constants.MCAST_PORT
 IS_ALL_GROUPS = True
-MULTICAST_TTL = 2
+MULTICAST_TTL = constants.MULTICAST_TTL
 
 class Node:
     
@@ -23,6 +24,12 @@ class Node:
         else:
             # on this port, listen ONLY to MCAST_GRP
             self.sock.bind((MCAST_GRP, MCAST_PORT))
+        
+        print((MCAST_GRP, MCAST_PORT))
+        print((self.host, constants.SENSOR_PORT))
+        # This port will listen to unicast sensor communication
+        self.sock.bind((self.host, constants.SENSOR_PORT))
+
         mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
@@ -59,11 +66,13 @@ class Node:
 def main():
     hostname = socket.gethostname()
     host = socket.gethostbyname(hostname)
+    print(hostname,host)
     node = Node(host, MCAST_PORT)
     node.start()
-    # to test handler is working
+    # to test mcast handler is working
     node.sock.sendto(b"robot", (MCAST_GRP, MCAST_PORT))
-
+    # to test unicast sensor handler is working
+    node.sock.sendto(b"sensortest", (host, constants.SENSOR_PORT))
     while True:
         pass
     
