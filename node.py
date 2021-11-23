@@ -28,7 +28,7 @@ class Node:
 
         while True:
             data, addr = self.sock.recvfrom(10240)
-            # print(data)
+            print(data)
             # print(addr)
             # if addr not in addr_list:
             #     addr_list.append(addr)
@@ -41,11 +41,12 @@ class Node:
         
     def start(self):
         listenerThread = threading.Thread(target=self.handleClient)
+        listenerThread.setDaemon(True)
         listenerThread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")    
         print("[STARTING] server is starting...")
-        checkNodesThread = threading.Thread(target=self.checkNodes)
-        checkNodesThread.start()
+        # checkNodesThread = threading.Thread(target=self.checkNodes)
+        # checkNodesThread.start()
 
     def sendMsgToAll(strMsg):
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
@@ -62,6 +63,9 @@ def main():
     node.start()
     # to test handler is working
     node.sock.sendto(b"robot", (MCAST_GRP, MCAST_PORT))
+
+    while True:
+        pass
     
 if __name__ == '__main__':
     main()
