@@ -9,41 +9,42 @@ MULTICAST_TTL = 2
 
 class Node:
     
-    def __init__():
+    def __init__(self, host, port):
         self.host = host
         self.port = port
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        print(self.sock)
 
-    def handleClient():
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    def handleClient(self):
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if IS_ALL_GROUPS:
             # on this port, receives ALL multicast groups
-            sock.bind(('', MCAST_PORT))
+            self.sock.bind(('', MCAST_PORT))
         else:
             # on this port, listen ONLY to MCAST_GRP
-            sock.bind((MCAST_GRP, MCAST_PORT))
+            self.sock.bind((MCAST_GRP, MCAST_PORT))
         mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         while True:
-            data, addr = sock.recvfrom(10240)
-            print(data)
-            print(addr)
-            if addr not in addr_list:
-                addr_list.append(addr)
-                print("IP address list: ", addr_list)
-                print(data)
+            data, addr = self.sock.recvfrom(10240)
+            # print(data)
+            # print(addr)
+            # if addr not in addr_list:
+            #     addr_list.append(addr)
+            #     print("IP address list: ", addr_list)
+            #     print(data)
         
     #Function to check if there is a drop in connection of any node
-    def checkNodes():
+    def checkNodes(self):
         pass
         
-    def start():
-        listenerThread = threading.Thread(target=handleClient)
+    def start(self):
+        listenerThread = threading.Thread(target=self.handleClient)
         listenerThread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")    
         print("[STARTING] server is starting...")
-        checkNodesThread = threading.Thread(target=checkNodes)
+        checkNodesThread = threading.Thread(target=self.checkNodes)
         checkNodesThread.start()
 
     def sendMsgToAll(strMsg):
@@ -58,6 +59,9 @@ def main():
     hostname = socket.gethostname()
     host = socket.gethostbyname(hostname)
     node = Node(host, MCAST_PORT)
+    node.start()
+    # to test handler is working
+    node.sock.sendto(b"robot", (MCAST_GRP, MCAST_PORT))
     
 if __name__ == '__main__':
     main()
