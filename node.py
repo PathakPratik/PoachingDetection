@@ -11,7 +11,6 @@ MULTICAST_TTL = constants.MULTICAST_TTL
 
 class Node:
     nodeTimestampList = {}
-    addrList = []
     nodeName = ""
     
     def __init__(self, host, port, hostname):
@@ -38,10 +37,7 @@ class Node:
 
         while True:
             data, addr = self.sock.recvfrom(10240)
-            print("Received message in handleDiscovery: ", data, " from IP: ", addr)
-            if addr not in self.addrList:
-                self.addrList.append(addr)
-                print("handleDiscovery New IP address entry into list: ", self.addrList)
+            print(time.time(), "::Received message in handleDiscovery: ", data, " from IP: ", addr)
             self.nodeTimestampList[addr] = time.time()
             print("handleDiscovery IP Address List: ",self.nodeTimestampList)
 
@@ -58,7 +54,17 @@ class Node:
 
     #Function to check if there is a drop in connection of any node
     def checkNodes(self):
-        pass
+        while(True):
+            currTime = time.time()
+            for addr in list(self.nodeTimestampList):
+                print("checkNodes:: Checking if node ", addr, " is present...")
+                if currTime - self.nodeTimestampList[addr] > 180:
+                    #Remove the address and timestamp from the list
+                    print("Removing node ", addr, " from list, as difference between timestamps is: ", currTime - self.nodeTimestampList[addr])
+                    self.nodeTimestampList.pop(addr)
+                    print("removed")
+                    
+            time.sleep(5)
         
     def start(self):
         self.setNodeName("root")
@@ -70,8 +76,8 @@ class Node:
         #SensorThread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")    
         print("[STARTING] server is starting...")
-        # checkNodesThread = threading.Thread(target=self.checkNodes)
-        # checkNodesThread.start()
+        checkNodesThread = threading.Thread(target=self.checkNodes)
+        checkNodesThread.start()
         broadcastNodeThread = threading.Thread(target=self.broadcastNode)
         broadcastNodeThread.start()
         
