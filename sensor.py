@@ -4,6 +4,7 @@ import numpy as np
 import random
 import argparse
 from PIL import Image
+import constants
 
 
 
@@ -45,34 +46,34 @@ def main():
     print(args.sensorType)
 
     host = socket.gethostbyname(socket.gethostname())
-    sensor = Sensor(host, 34000)
+    sensor = Sensor(host, constants.SENSOR_PORT)
 
     if args.sensorType == 'Image':
         val = sensor.imgarray()
         valstr = val
         valcd = valstr.encode('utf-8')
-        sensor.sock.sendto(valcd, (host, 34000))
+        sensor.sock.sendto(valcd, (host, constants.SENSOR_PORT))
 
     if args.sensorType == 'Location':
         loc = sensor.locate()
         locstr = f'{"Location : "}{loc}'
         loccd = locstr.encode('utf-8')
         print(locstr)
-        sensor.sock.sendto(loccd, (host, 34000))
+        sensor.sock.sendto(loccd, (host, constants.SENSOR_PORT))
 
     if args.sensorType == 'Accelerometer':
         acc = sensor.accelerometer()
         accstr = f'{"Accelerometer : "}{acc}'
         acccd = accstr.encode('utf-8')
         print(accstr)
-        sensor.sock.sendto(acccd, (host, 34000))
+        sensor.sock.sendto(acccd, (host, constants.SENSOR_PORT))
 
     if args.sensorType == 'Barometer':
         acc = sensor.accelerometer()
         accstr = f'{"Barometer : "}{acc}'
         acccd = accstr.encode('utf-8')
         print(accstr)
-        sensor.sock.sendto(acccd, (host, 34000))
+        sensor.sock.sendto(acccd, (host, constants.SENSOR_PORT))
 
 if __name__ == '__main__':
     main()
