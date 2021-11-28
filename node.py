@@ -73,7 +73,7 @@ class Node:
         listenerThread.start()
         SensorThread = threading.Thread(target=self.listenToSensor)
         SensorThread.setDaemon(True)
-        #SensorThread.start()
+        SensorThread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")    
         print("[STARTING] server is starting...")
         checkNodesThread = threading.Thread(target=self.checkNodes)
