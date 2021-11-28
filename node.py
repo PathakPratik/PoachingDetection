@@ -77,8 +77,10 @@ class Node:
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")    
         print("[STARTING] server is starting...")
         checkNodesThread = threading.Thread(target=self.checkNodes)
+        checkNodesThread.setDaemon(True)
         checkNodesThread.start()
         broadcastNodeThread = threading.Thread(target=self.broadcastNode)
+        broadcastNodeThread.setDaemon(True)
         broadcastNodeThread.start()
         
     def broadcastNode(self):
