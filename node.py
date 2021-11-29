@@ -26,8 +26,23 @@ class Node:
         self.unicastsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.routingsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         
-    def setNodeName(self):
-        self.nodeName = str(sys.argv[1])
+    def setNodeName(self, name):
+        self.nodeName = name
+        
+    def handleRootFailure(self):
+        minNode = 1000000
+        #Iterate through the entire list of nodes and find out the lowest number
+        for addr in list(self.discoverDB):
+            nodeNumber = addr[4:]
+            print("THIS IS NODE NUMBER::", int(nodeNumber))
+            if int(nodeNumber) < minNode:
+                minNode = int(nodeNumber)
+                
+        newRoot = "node" + str(minNode)
+        #If this is the nim node, set noneName to root
+        if self.nodeName == newRoot:
+            self.setNodeName("root")
+            print("node", minNode, " is new root")
         
     def handleRouting(self):
         self.routingsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -130,12 +145,13 @@ class Node:
                     self.nodeTimestampList.pop(addr)
                     self.discoverDB.pop(addr)
                     self.routingDB.pop(addr)
-                    print("removed")
+                    if addr == 'root':
+                        self.handleRootFailure()
                     
             time.sleep(60)
         
     def start(self, nodeName):
-        self.setNodeName()
+        self.setNodeName(str(sys.argv[1]))
         
         discoveryThread = threading.Thread(target=self.handleDiscovery)
         discoveryThread.setDaemon(True)
@@ -187,7 +203,8 @@ def main():
     node.start(str(sys.argv[1]))
 
     # Testing internetwork connection
-    node.sock.sendto(b"InterNetwork", (host, constants.SENSOR_PORT))
+    node.sock.sendto(b"InterNetwork1", ('10.35.70.5', constants.SENSOR_PORT))
+    node.sock.sendto(b"InterNetwork2", ('10.35.70.6', constants.SENSOR_PORT))
 
     while True:
         pass
