@@ -111,7 +111,7 @@ class Node:
             currTime = time.time()
             for addr in list(self.nodeTimestampList):
                 print("checkNodes:: Checking if node ", addr, " is present...")
-                if currTime - self.nodeTimestampList[addr] > 180:
+                if currTime - self.nodeTimestampList[addr] > 30:
                     #Remove the address and timestamp from the list
                     print("Removing node ", addr, " from list, as difference between timestamps is: ", currTime - self.nodeTimestampList[addr])
                     self.nodeTimestampList.pop(addr)

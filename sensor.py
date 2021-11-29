@@ -1,9 +1,9 @@
 # import constants
 import socket
-import numpy as np
+# import numpy as np
 import random
 import argparse
-from PIL import Image
+# from PIL import Image
 import constants
 
 
