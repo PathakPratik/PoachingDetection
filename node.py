@@ -203,8 +203,7 @@ def main():
     node.start(str(sys.argv[1]))
 
     # Testing internetwork connection
-    node.sock.sendto(b"InterNetwork1", ('10.35.70.5', constants.SENSOR_PORT))
-    node.sock.sendto(b"InterNetwork2", ('10.35.70.6', constants.SENSOR_PORT))
+    node.sock.sendto(b"InterNetwork", (host, constants.SENSOR_PORT))
 
     while True:
         pass
