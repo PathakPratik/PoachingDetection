@@ -46,16 +46,16 @@ class Node:
             broadcastDBJson = data.decode("utf-8")
             print("BROADCAST DB RECEIVED:::: ", broadcastDBJson)
             currentValue = self.routingDB[key]
-                newValue = db[key]
-                newValue[1] = newValue[1]+1   #Increment hop
+            newValue = db[key]
+            newValue[1] = newValue[1]+1   #Increment hop
                 
-                if key == self.nodeName:
-                    print("Key is same as self.nodeName, CONTINUING...")
-                    continue                 # This is out own key, do nothing
-                if key in self.routingDB:    # If key is present in routingDB
+            if key == self.nodeName:
+                print("Key is same as self.nodeName, CONTINUING...")
+                continue                 # This is out own key, do nothing
+            if key in self.routingDB:    # If key is present in routingDB
                     
-                    if currentValue[1] > newValue[1]:     # If current hop count is greater than received hop count, replace with new
-                        self.routingDB[key] = newValue 
+                if currentValue[1] > newValue[1]:     # If current hop count is greater than received hop count, replace with new
+                    self.routingDB[key] = newValue 
                     print("routingDB after entry::", self.routingDB)
                 else:                        # key is not present in DB, so make a new entry
                     self.routingDB[key] = newValue
