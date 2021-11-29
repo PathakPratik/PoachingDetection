@@ -115,6 +115,8 @@ class Node:
                     #Remove the address and timestamp from the list
                     print("Removing node ", addr, " from list, as difference between timestamps is: ", currTime - self.nodeTimestampList[addr])
                     self.nodeTimestampList.pop(addr)
+                    self.discoverDB.pop(addr)
+                    self.routingDB.pop(addr)
                     print("removed")
                     
             time.sleep(5)
