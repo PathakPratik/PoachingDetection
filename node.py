@@ -6,7 +6,6 @@ import time
 import sys
 import json
 
-MCAST_GRP = constants.MCAST_GRP
 MCAST_DISC_PORT = constants.MCAST_DISC_PORT
 MCAST_ROUTING_PORT = constants.MCAST_ROUTING_PORT
 IS_ALL_GROUPS = True
@@ -18,10 +17,11 @@ class Node:
     routingDB = {}
     discoverDB = {}
     
-    def __init__(self, host, port, hostname):
+    def __init__(self, host, port, hostname, network):
         self.host = host
         self.hostname = hostname
         self.port = port
+        self.mcast_grp = constants.MCAST_GRP[int(network.replace('network', '')) - 1]
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.unicastsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.routingsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -39,9 +39,9 @@ class Node:
             self.routingsock.bind(('', MCAST_ROUTING_PORT))
         else:
             # on this port, listen ONLY to MCAST_GRP
-            self.routingsock.bind((MCAST_GRP, MCAST_ROUTING_PORT))
+            self.routingsock.bind((self.mcast_grp, MCAST_ROUTING_PORT))
 
-        mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
+        mreq = struct.pack("4sl", socket.inet_aton(self.mcast_grp), socket.INADDR_ANY)
         self.routingsock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         while True:
@@ -61,7 +61,7 @@ class Node:
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
             dict_json = json.dumps(self.routingDB)
             print("!!!!!!!!!!!!!", dict_json)
-            self.sock.sendto(dict_json.encode('utf-8'), (MCAST_GRP, MCAST_ROUTING_PORT))
+            self.sock.sendto(dict_json.encode('utf-8'), (self.mcast_grp, MCAST_ROUTING_PORT))
             print(self.nodeName, " has broadcasted its database...")
             time.sleep(30)
 
@@ -72,10 +72,10 @@ class Node:
             # on this port, receives ALL multicast groups
             self.sock.bind(('', MCAST_DISC_PORT))
         else:
-            # on this port, listen ONLY to MCAST_GRP
-            self.sock.bind((MCAST_GRP, MCAST_DISC_PORT))
+            # on this port, listen ONLY to self.mcast_grp
+            self.sock.bind((self.mcast_grp, MCAST_DISC_PORT))
 
-        mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
+        mreq = struct.pack("4sl", socket.inet_aton(self.mcast_grp), socket.INADDR_ANY)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         while True:
@@ -156,14 +156,14 @@ class Node:
     def broadcastNode(self):
         while(True):
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
-            self.sock.sendto(self.nodeName.encode('utf-8'), (MCAST_GRP, MCAST_DISC_PORT))
+            self.sock.sendto(self.nodeName.encode('utf-8'), (self.mcast_grp, MCAST_DISC_PORT))
             print(self.nodeName, " has broadcasted...")
             time.sleep(30)
             
     
     def sendMsgToAll(strMsg):
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
-        sock.sendto(b"strMsg", (MCAST_GRP, MCAST_DISC_PORT))
+        sock.sendto(b"strMsg", (self.mcast_grp, MCAST_DISC_PORT))
         
     def sendMsgToNode(strMsg, ip_addr):
         unicastSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -172,13 +172,14 @@ class Node:
 def main():
     hostname = socket.gethostname()
     host = socket.gethostbyname(hostname)
-    node = Node(host, MCAST_DISC_PORT, hostname)
+    node = Node(host, MCAST_DISC_PORT, hostname, sys.argv[2])
     
     node.start(str(sys.argv[1]))
-    # to test mcast handler is working
-    #node.sock.sendto(b"robot", (MCAST_GRP, MCAST_DISC_PORT))
-    # to test unicast sensor handler is working
-    #node.unicastsock.sendto(b"sensortest", (hostname, constants.SENSOR_PORT))
+
+    # Testing internetwork connection
+    node.sock.sendto(b"InterNetwork1", ('10.35.70.5', constants.SENSOR_PORT))
+    node.sock.sendto(b"InterNetwork2", ('10.35.70.6', constants.SENSOR_PORT))
+
     while True:
         pass
     
