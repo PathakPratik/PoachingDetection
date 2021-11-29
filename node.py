@@ -148,7 +148,7 @@ class Node:
         routingThread.start()
         
         broadcastDatabaseThread = threading.Thread(target=self.broadcastDatabase)
-        routingThread.setDaemon(True)
+        broadcastDatabaseThread.setDaemon(True)
         broadcastDatabaseThread.start()
         
     def broadcastNode(self):
