@@ -5,6 +5,7 @@ import constants
 import time
 import sys
 import json
+import sensor
 
 MCAST_DISC_PORT = constants.MCAST_DISC_PORT
 MCAST_ROUTING_PORT = constants.MCAST_ROUTING_PORT
@@ -122,6 +123,13 @@ class Node:
             print(detail[0])
             print(detail[1])
 
+    def generateSensorData(self):
+        hostname = socket.gethostname()
+        host = socket.gethostbyname(hostname)
+        sensorobj = sensor.SensorClass(host, 34000)
+        while True:
+            sensorobj.getData()
+
     def listenToSensor(self):
         # Remove this after we decide how to adress each node
         self.unicastsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -131,7 +139,17 @@ class Node:
 
         while True:
             data, _ = self.unicastsock.recvfrom(10240)
-            print(data)
+            if self.nodeName == "root":
+                self.detectPoacher(data)
+
+    def detectPoacher(self, data):
+        print("SENSOR DATA RECIEVED")
+        print(data)
+        sensorJson = data.decode("utf-8")
+        if (sensorJson[:5] == "Image"):
+            print(sensorJson)
+        else:
+            print(sensorJson)
 
     #Function to check if there is a drop in connection of any node
     def checkNodes(self):
@@ -181,7 +199,11 @@ class Node:
         broadcastDatabaseThread = threading.Thread(target=self.broadcastDatabase)
         broadcastDatabaseThread.setDaemon(True)
         broadcastDatabaseThread.start()
-        
+
+        getDataThread = threading.Thread(target=self.generateSensorData)
+        getDataThread.setDaemon(True)
+        getDataThread.start()
+
     def broadcastNode(self):
         while(True):
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
@@ -189,7 +211,7 @@ class Node:
             print(self.nodeName, " has broadcasted...")
             time.sleep(30)
 
-    def unicastNode(strMsg, nodeName):
+    def unicastNode(self, strMsg, nodeName):
         unicastSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         record = self.routingDB[nodeName]
         ip_addr = record[0]
