@@ -67,8 +67,8 @@ def main():
     print("main")
     hostname = socket.gethostname()
     host = socket.gethostbyname(hostname)
-    sensor = SensorClass(host, 34000)
-    sensor.getData()
+    # sensor = SensorClass(host, constants.SENSOR_PORT)
+    # sensor.getData()
 
 if __name__ == '__main__':
     main()

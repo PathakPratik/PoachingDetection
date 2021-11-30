@@ -126,7 +126,7 @@ class Node:
     def generateSensorData(self):
         hostname = socket.gethostname()
         host = socket.gethostbyname(hostname)
-        sensorobj = sensor.SensorClass(host, 34000)
+        sensorobj = sensor.SensorClass(host, constants.SENSOR_PORT)
         while True:
             sensorobj.getData()
 
@@ -144,10 +144,12 @@ class Node:
 
     def detectPoacher(self, data):
         print("SENSOR DATA RECIEVED")
-        print(data)
         sensorJson = data.decode("utf-8")
         if (sensorJson[:5] == "Image"):
-            print(sensorJson)
+            if( sensorJson.find('Poacher') != -1 ):
+                print("################### SOS #######################")
+                print("----------   POACHER HAS APPEARED  -----------")
+                print("################### SOS #######################")
         else:
             print(sensorJson)
 
