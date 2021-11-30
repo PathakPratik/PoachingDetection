@@ -1,79 +1,64 @@
-# import constants
-import socket
-# import numpy as np
-import random
-import argparse
-# from PIL import Image
 import constants
+import socket
+import random
+import time
+import threading
 
+class SensorClass:
 
+    def getData(self):
+        while True:
+            # Sending image from image sensor to identify if its a poacher or not
+            filelist = ['water','Poacher1','Poacher2','cow','elephant']
+            filename = filelist[random.randint(0,4)]
+            image = {'Image': filename}
 
-class Sensor:
+            # Sending location coordinates latitude and longitude
+            lat = round(random.uniform(53.1, 60.9), 5)
+            long = round(random.uniform(6.0, 6.9), 5)
+            loc = {'latitude': lat, 'longitude': long}
+            location = {'location': loc}
+            print(location[location])
 
-    def imgarray(self):
-        # im = Image.open('D:/DEsktop/Scalable Assignments/Project3/Images/poacher1.jpg')
-        # rgb = np.array(im.convert('RGB'))
-        # r = rgb[:, :, 0]
-        # filelist = ['poacher1','lion','tiger','fox','poacher2','poacher3','bear','wolf','horse','giraffe','deer','scene1','scene2','scene3']
-        filelist = ['water','Poacher1','Poacher2','cow','elephant']
-        filename = filelist[random.randint(0,4)]
-        print(filename)
-        return filename
+            # sending accelerometer values
+            xaxis_acc = round(random.uniform(53.1, 60.9), 5)
+            yaxis_acc = round(random.uniform(20.1, 60.9), 5)
+            zaxis_acc = round(random.uniform(70.1, 900.9), 5)
+            acc = {'X axis': xaxis_acc, 'Y axis': yaxis_acc, 'Z axis': zaxis_acc}
+            accelerometer = {'accelerometer': acc}
 
-    def locate(self):
-        return random.randint(40, 60)
+            # sending battery value to check position of the drone
+            batteryval = random.randint(10, 100)
+            bat = {'Battery': batteryval}
 
-    def accelerometer(self):
-        x = random.randint(0, 20)
-        y = random.randint(30, 50)
-        z = random.randint(60, 80)
-        acc = f'{"x axis : "}{x}{", y axis : "}{y}{", z axis : "}{z}'
-        print("hi")
-        print(acc)
-        return acc
+            # sending gyrometer values to check angular position
+            xaxis_gyr = round(random.uniform(53.1, 60.9), 5)
+            yaxis_gyr = round(random.uniform(20.1, 60.9), 5)
+            zaxis_gyr = round(random.uniform(70.1, 900.9), 5)
+            gyr = {'X axis': xaxis_gyr, 'Y axis': yaxis_gyr,'Z axis': zaxis_gyr}
+            gyro = {'Gyroscope': gyr}
+
+            # sending barometer values to check height based on air pressure reading
+            barom = round(random.uniform(14.1, 20.9), 3)
+            bar = {'Barometer' : barom}
+
+            host = socket.gethostbyname(socket.gethostname())
+            sensor = SensorClass(host, constants.SENSOR_PORT)
+            data = image.encode('utf-8')
+            sensor.sock.sendto(data, (host, constants.SENSOR_PORT))
+            time.sleep(30)
 
     def __init__(self, host, port):
+        # getDataThread = threading.Thread(target=self.getData)
+        # getDataThread.setDaemon(True)
+        # getDataThread.start()
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         print(self.sock)
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--sensorType', help='Type of Sensor', type=str)
-    parser.add_argument('--area', help='Node Area', type=str)
-    args = parser.parse_args()
-    print(args.sensorType)
-
-    host = socket.gethostbyname(socket.gethostname())
-    sensor = Sensor(host, constants.SENSOR_PORT)
-
-    if args.sensorType == 'Image':
-        val = sensor.imgarray()
-        valstr = val
-        valcd = valstr.encode('utf-8')
-        sensor.sock.sendto(valcd, (host, constants.SENSOR_PORT))
-
-    if args.sensorType == 'Location':
-        loc = sensor.locate()
-        locstr = f'{"Location : "}{loc}'
-        loccd = locstr.encode('utf-8')
-        print(locstr)
-        sensor.sock.sendto(loccd, (host, constants.SENSOR_PORT))
-
-    if args.sensorType == 'Accelerometer':
-        acc = sensor.accelerometer()
-        accstr = f'{"Accelerometer : "}{acc}'
-        acccd = accstr.encode('utf-8')
-        print(accstr)
-        sensor.sock.sendto(acccd, (host, constants.SENSOR_PORT))
-
-    if args.sensorType == 'Barometer':
-        acc = sensor.accelerometer()
-        accstr = f'{"Barometer : "}{acc}'
-        acccd = accstr.encode('utf-8')
-        print(accstr)
-        sensor.sock.sendto(acccd, (host, constants.SENSOR_PORT))
+    print("main")
 
 if __name__ == '__main__':
     main()
