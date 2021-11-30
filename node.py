@@ -69,7 +69,6 @@ class Node:
                 newValue[1] = newValue[1]+1   #Increment hop
                 
                 if key == self.nodeName:
-                    print("Key is same as self.nodeName, CONTINUING...")
                     continue                 # This is out own key, do nothing
                 if key in self.routingDB:    # If key is present in routingDB
                     
