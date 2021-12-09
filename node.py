@@ -5,7 +5,7 @@ import constants
 import time
 import sys
 import json
-import sensor
+from sensor import SensorClass
 
 MCAST_DISC_PORT = constants.MCAST_DISC_PORT
 MCAST_ROUTING_PORT = constants.MCAST_ROUTING_PORT
@@ -125,7 +125,7 @@ class Node:
     def generateSensorData(self):
         hostname = socket.gethostname()
         host = socket.gethostbyname(hostname)
-        sensorobj = sensor.SensorClass(host, constants.SENSOR_PORT)
+        sensorobj = SensorClass(host, constants.SENSOR_PORT)
         while True:
             sensorobj.getData()
 
@@ -226,7 +226,7 @@ def main():
     node.start(str(sys.argv[1]))
 
     # Testing internetwork connection
-    node.sock.sendto(b"InterNetwork", (host, constants.SENSOR_PORT))
+    # node.sock.sendto(b"InterNetwork", (host, constants.SENSOR_PORT))
 
     while True:
         pass

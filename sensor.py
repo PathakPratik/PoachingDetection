@@ -3,7 +3,12 @@ import socket
 import random
 import time
 
-class SensorClass:
+class SensorClass():
+
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 
     def getData(self):
         while True:
@@ -64,10 +69,6 @@ class SensorClass:
             sensor.sock.sendto(encdata, (host, constants.SENSOR_PORT))
             time.sleep(30)
 
-    def _init_(self, host, port):
-        self.host = host
-        self.port = port
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 
 def main():
     print("main")
