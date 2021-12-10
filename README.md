@@ -14,4 +14,4 @@ The script also demonstrates how we handle the failure of root node by purposefu
 
 ## Run the following command on the second PI
 
-```./runme.sh network1```
+```./runme.sh network2```
