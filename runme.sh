@@ -10,13 +10,13 @@ node3id=$!
 python3 node.py node4 $1 &
 node4id=$!
 
-sleep 30s
+sleep 1m
 
 # Demonstrate root node failure
 kill $rootid
 
 # After 5 minutes stop the p2p network
-sleep 5m
+sleep 10m
 
 kill $node1id
 kill $node2id
