@@ -5,6 +5,7 @@ import constants
 import time
 import sys
 import json
+from sensor import SensorClass
 
 MCAST_DISC_PORT = constants.MCAST_DISC_PORT
 MCAST_ROUTING_PORT = constants.MCAST_ROUTING_PORT
@@ -68,7 +69,6 @@ class Node:
                 newValue[1] = newValue[1]+1   #Increment hop
                 
                 if key == self.nodeName:
-                    print("Key is same as self.nodeName, CONTINUING...")
                     continue                 # This is out own key, do nothing
                 if key in self.routingDB:    # If key is present in routingDB
                     
@@ -122,6 +122,13 @@ class Node:
             print(detail[0])
             print(detail[1])
 
+    def generateSensorData(self):
+        hostname = socket.gethostname()
+        host = socket.gethostbyname(hostname)
+        sensorobj = SensorClass(host, constants.SENSOR_PORT)
+        while True:
+            sensorobj.getData()
+
     def listenToSensor(self):
         # Remove this after we decide how to adress each node
         self.unicastsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -131,7 +138,19 @@ class Node:
 
         while True:
             data, _ = self.unicastsock.recvfrom(10240)
-            print(data)
+            if self.nodeName == "root":
+                self.detectPoacher(data)
+
+    def detectPoacher(self, data):
+        print("SENSOR DATA RECIEVED")
+        sensorJson = data.decode("utf-8")
+        if (sensorJson[:14] == "Recieved Image"):
+            if( sensorJson.find('Poacher') != -1 ):
+                print("################### SOS #######################")
+                print("----------   POACHER HAS APPEARED  -----------")
+                print("################### SOS #######################")
+        else:
+            print(sensorJson)
 
     #Function to check if there is a drop in connection of any node
     def checkNodes(self):
@@ -181,7 +200,11 @@ class Node:
         broadcastDatabaseThread = threading.Thread(target=self.broadcastDatabase)
         broadcastDatabaseThread.setDaemon(True)
         broadcastDatabaseThread.start()
-        
+
+        getDataThread = threading.Thread(target=self.generateSensorData)
+        getDataThread.setDaemon(True)
+        getDataThread.start()
+
     def broadcastNode(self):
         while(True):
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
@@ -189,7 +212,7 @@ class Node:
             print(self.nodeName, " has broadcasted...")
             time.sleep(30)
 
-    def unicastNode(strMsg, nodeName):
+    def unicastNode(self, strMsg, nodeName):
         unicastSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         record = self.routingDB[nodeName]
         ip_addr = record[0]
@@ -203,7 +226,7 @@ def main():
     node.start(str(sys.argv[1]))
 
     # Testing internetwork connection
-    node.sock.sendto(b"InterNetwork", (host, constants.SENSOR_PORT))
+    # node.sock.sendto(b"InterNetwork", (host, constants.SENSOR_PORT))
 
     while True:
         pass
