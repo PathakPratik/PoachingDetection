@@ -18,14 +18,15 @@ class Node:
     routingDB = {}
     discoverDB = {}
     
-    def __init__(self, host, port, hostname, network):
+    def __init__(self, host, port, hostname, networkname):
         self.host = host
         self.hostname = hostname
         self.port = port
-        self.mcast_grp = constants.MCAST_GRP[int(network.replace('network', '')) - 1]
+        self.mcast_grp = constants.MCAST_GRP[int(networkname) - 1]
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.unicastsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.routingsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.gatewaysock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         
     def setNodeName(self, name):
         self.nodeName = name
@@ -130,9 +131,8 @@ class Node:
             sensorobj.getData()
 
     def listenToSensor(self):
-        # Remove this after we decide how to adress each node
         self.unicastsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
+            
         # This port will listen to unicast sensor communication
         self.unicastsock.bind((self.hostname, constants.SENSOR_PORT))
 
@@ -146,9 +146,9 @@ class Node:
         sensorJson = data.decode("utf-8")
         if (sensorJson[:14] == "Recieved Image"):
             if( sensorJson.find('Poacher') != -1 ):
-                print("################### SOS #######################")
-                print("----------   POACHER HAS APPEARED  -----------")
-                print("################### SOS #######################")
+                # Alert SOS across networks
+                msg = "################### SOS ####################### \n ----------   POACHER HAS APPEARED  ----------- \n ################### SOS #######################"
+                self.gatewaysock.sendto(msg.encode("utf-8"), (constants.INTERNETWORK_GRP, constants.INTERNETWORK_PORT))
         else:
             print(sensorJson)
 
@@ -168,10 +168,31 @@ class Node:
                         self.handleRootFailure()
                     
             time.sleep(60)
-        
+
+    # This handles communication across networks using a gateway
+    def gatewayListen(self):
+        if self.nodeName == "root":
+
+            self.gatewaysock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if IS_ALL_GROUPS:
+                self.gatewaysock.bind(('', constants.INTERNETWORK_PORT))
+            else:
+                self.gatewaysock.bind((constants.INTERNETWORK_GRP, constants.INTERNETWORK_PORT))
+
+            mreq = struct.pack("4sl", socket.inet_aton(constants.INTERNETWORK_GRP), socket.INADDR_ANY)
+            self.gatewaysock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
+            while True:
+                data, _ = self.gatewaysock.recvfrom(10240)
+                print(data.decode('utf-8'))    
+
     def start(self, nodeName):
         self.setNodeName(str(sys.argv[1]))
         
+        gatewayThread = threading.Thread(target=self.gatewayListen)
+        gatewayThread.setDaemon(True)
+        gatewayThread.start()
+
         discoveryThread = threading.Thread(target=self.handleDiscovery)
         discoveryThread.setDaemon(True)
         discoveryThread.start()
@@ -179,8 +200,7 @@ class Node:
         SensorThread = threading.Thread(target=self.listenToSensor)
         SensorThread.setDaemon(True)
         SensorThread.start()
-        
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")    
+            
         print("[STARTING] server is starting...")
         
         checkNodesThread = threading.Thread(target=self.checkNodes)
@@ -221,12 +241,15 @@ class Node:
 def main():
     hostname = socket.gethostname()
     host = socket.gethostbyname(hostname)
-    node = Node(host, MCAST_DISC_PORT, hostname, sys.argv[2])
+    networkname = sys.argv[2].replace('network', '')
+    
+    if(not networkname.isdigit() or not int(networkname) in (1,2)):
+        print("Please enter a valid network name")
+        exit(1)
+
+    node = Node(host, MCAST_DISC_PORT, hostname, networkname)
     
     node.start(str(sys.argv[1]))
-
-    # Testing internetwork connection
-    # node.sock.sendto(b"InterNetwork", (host, constants.SENSOR_PORT))
 
     while True:
         pass

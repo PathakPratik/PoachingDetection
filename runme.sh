@@ -1,16 +1,3 @@
-#for nodename in root node1 node2 node3 node4;
-#do
-#       python3 node.py $nodename network1 &
-#       if ["$nodename" == "root"]; then
-#               rootid = $!
-#       fi
-#done
-
-#sleep 30s
-#echo "-----!!!!$rootid!!!------"
-#kill $rootid
-
-
 # Run a a p2p network of 5 nodes 
 python3 node.py root $1 &
 rootid=$!
