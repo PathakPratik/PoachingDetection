@@ -26,6 +26,7 @@ class Node:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.unicastsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.routingsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.gatewaysock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         
     def setNodeName(self, name):
         self.nodeName = name
@@ -130,9 +131,8 @@ class Node:
             sensorobj.getData()
 
     def listenToSensor(self):
-        # Remove this after we decide how to adress each node
         self.unicastsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
+            
         # This port will listen to unicast sensor communication
         self.unicastsock.bind((self.hostname, constants.SENSOR_PORT))
 
@@ -168,10 +168,25 @@ class Node:
                         self.handleRootFailure()
                     
             time.sleep(60)
-        
+
+    def gatewayListen(self):
+        self.gatewaysock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.gatewaysock.bind((self.hostname, constants.INTERNETWORK_PORT))
+
+        while True:
+            data, _ = self.gatewaysock.recvfrom(10240)
+            # if self.nodeName == "root":
+            print("################ INTERNETWORK DATA ###########")
+            print(data)    
+            print("################ INTERNETWORK DATA ###########")
+
     def start(self, nodeName):
         self.setNodeName(str(sys.argv[1]))
         
+        gatewayThread = threading.Thread(target=self.gatewayListen)
+        gatewayThread.setDaemon(True)
+        gatewayThread.start()
+
         discoveryThread = threading.Thread(target=self.handleDiscovery)
         discoveryThread.setDaemon(True)
         discoveryThread.start()
@@ -231,7 +246,7 @@ def main():
     node.start(str(sys.argv[1]))
 
     # Testing internetwork connection
-    # node.sock.sendto(b"InterNetwork", (host, constants.SENSOR_PORT))
+    node.gatewaysock.sendto(b"InterNetwork", (host, constants.INTERNETWORK_PORT))
 
     while True:
         pass
