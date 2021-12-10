@@ -22,7 +22,7 @@ class Node:
         self.host = host
         self.hostname = hostname
         self.port = port
-        self.mcast_grp = constants.MCAST_GRP[int(networkname.replace('network', '')) - 1]
+        self.mcast_grp = constants.MCAST_GRP[int(networkname) - 1]
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.unicastsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.routingsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -146,9 +146,9 @@ class Node:
         sensorJson = data.decode("utf-8")
         if (sensorJson[:14] == "Recieved Image"):
             if( sensorJson.find('Poacher') != -1 ):
-                print("################### SOS #######################")
-                print("----------   POACHER HAS APPEARED  -----------")
-                print("################### SOS #######################")
+                # Alert SOS across networks
+                msg = "################### SOS ####################### \n ----------   POACHER HAS APPEARED  ----------- \n ################### SOS #######################"
+                self.gatewaysock.sendto(msg.encode("utf-8"), (constants.INTERNETWORK_GRP, constants.INTERNETWORK_PORT))
         else:
             print(sensorJson)
 
@@ -169,16 +169,22 @@ class Node:
                     
             time.sleep(60)
 
+    # This handles communication across networks using a gateway
     def gatewayListen(self):
-        self.gatewaysock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.gatewaysock.bind((self.hostname, constants.INTERNETWORK_PORT))
+        if self.nodeName == "root":
 
-        while True:
-            data, _ = self.gatewaysock.recvfrom(10240)
-            # if self.nodeName == "root":
-            print("################ INTERNETWORK DATA ###########")
-            print(data)    
-            print("################ INTERNETWORK DATA ###########")
+            self.gatewaysock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if IS_ALL_GROUPS:
+                self.gatewaysock.bind(('', constants.INTERNETWORK_PORT))
+            else:
+                self.gatewaysock.bind((constants.INTERNETWORK_GRP, constants.INTERNETWORK_PORT))
+
+            mreq = struct.pack("4sl", socket.inet_aton(constants.INTERNETWORK_GRP), socket.INADDR_ANY)
+            self.gatewaysock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
+            while True:
+                data, _ = self.gatewaysock.recvfrom(10240)
+                print(data.decode('utf-8'))    
 
     def start(self, nodeName):
         self.setNodeName(str(sys.argv[1]))
@@ -237,16 +243,13 @@ def main():
     host = socket.gethostbyname(hostname)
     networkname = sys.argv[2].replace('network', '')
     
-    if(not networkname.isdigit()):
+    if(not networkname.isdigit() or not int(networkname) in (1,2)):
         print("Please enter a valid network name")
         exit(1)
 
     node = Node(host, MCAST_DISC_PORT, hostname, networkname)
     
     node.start(str(sys.argv[1]))
-
-    # Testing internetwork connection
-    node.gatewaysock.sendto(b"InterNetwork", (host, constants.INTERNETWORK_PORT))
 
     while True:
         pass
