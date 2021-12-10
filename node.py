@@ -18,11 +18,11 @@ class Node:
     routingDB = {}
     discoverDB = {}
     
-    def __init__(self, host, port, hostname, network):
+    def __init__(self, host, port, hostname, networkname):
         self.host = host
         self.hostname = hostname
         self.port = port
-        self.mcast_grp = constants.MCAST_GRP[int(network.replace('network', '')) - 1]
+        self.mcast_grp = constants.MCAST_GRP[int(networkname.replace('network', '')) - 1]
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.unicastsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.routingsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -179,8 +179,7 @@ class Node:
         SensorThread = threading.Thread(target=self.listenToSensor)
         SensorThread.setDaemon(True)
         SensorThread.start()
-        
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")    
+            
         print("[STARTING] server is starting...")
         
         checkNodesThread = threading.Thread(target=self.checkNodes)
@@ -221,7 +220,13 @@ class Node:
 def main():
     hostname = socket.gethostname()
     host = socket.gethostbyname(hostname)
-    node = Node(host, MCAST_DISC_PORT, hostname, sys.argv[2])
+    networkname = sys.argv[2].replace('network', '')
+    
+    if(not networkname.isdigit()):
+        print("Please enter a valid network name")
+        exit(1)
+
+    node = Node(host, MCAST_DISC_PORT, hostname, networkname)
     
     node.start(str(sys.argv[1]))
 
