@@ -144,7 +144,7 @@ class Node:
     def detectPoacher(self, data):
         print("SENSOR DATA RECIEVED")
         sensorJson = data.decode("utf-8")
-        if (sensorJson[:5] == "Image"):
+        if (sensorJson[:14] == "Recieved Image"):
             if( sensorJson.find('Poacher') != -1 ):
                 print("################### SOS #######################")
                 print("----------   POACHER HAS APPEARED  -----------")
