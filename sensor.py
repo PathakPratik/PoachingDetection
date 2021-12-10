@@ -6,6 +6,9 @@ import time
 class SensorClass():
 
     def __init__(self, host, port):
+        # getDataThread = threading.Thread(target=self.getData)
+        # getDataThread.setDaemon(True)
+        # getDataThread.start()
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
