@@ -28,8 +28,8 @@ sleep 30s
 # Demonstrate root node failure
 kill $rootid
 
-# After 3 minutes stop the p2p network
-sleep 3m
+# After 5 minutes stop the p2p network
+sleep 5m
 
 kill $node1id
 kill $node2id
