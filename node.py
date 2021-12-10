@@ -36,7 +36,6 @@ class Node:
         #Iterate through the entire list of nodes and find out the lowest number
         for addr in list(self.discoverDB):
             nodeNumber = addr[4:]
-            print("THIS IS NODE NUMBER::", int(nodeNumber))
             if int(nodeNumber) < minNode:
                 minNode = int(nodeNumber)
                 
@@ -61,10 +60,10 @@ class Node:
         while True:
             data, addr = self.routingsock.recvfrom(10240)
             broadcastDBJson = data.decode("utf-8")
-            print("BROADCAST DB RECEIVED:::: ", broadcastDBJson)
+            #print("BROADCAST DB RECEIVED:::: ", broadcastDBJson)
             db = json.loads(broadcastDBJson)
             for key in db:    #Take every key in the incoming db
-                print("AFTER PARSING:: ", db[key]);
+                #print("AFTER PARSING:: ", db[key]);
                 currentValue = self.routingDB[key]
                 newValue = db[key]
                 newValue[1] = newValue[1]+1   #Increment hop
@@ -75,7 +74,7 @@ class Node:
                     
                     if currentValue[1] > newValue[1]:     # If current hop count is greater than received hop count, replace with new
                         self.routingDB[key] = newValue 
-                        print("routingDB after entry::", self.routingDB)
+                        #print("routingDB after entry::", self.routingDB)
                     else:                        # key is not present in DB, so make a new entry
                         self.routingDB[key] = newValue
             
@@ -86,12 +85,12 @@ class Node:
                 values = self.discoverDB[node]
                 self.routingDB[node] = values
                 print("Routing DB new entry::: ", self.routingDB)
-            print("Routing DB: ", self.routingDB)
+            #print("Routing DB: ", self.routingDB)
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
             dict_json = json.dumps(self.routingDB)
-            print("!!!!!!!!!!!!!", dict_json)
+            #print("!!!!!!!!!!!!!", dict_json)
             self.sock.sendto(dict_json.encode('utf-8'), (self.mcast_grp, MCAST_ROUTING_PORT))
-            print(self.nodeName, " has broadcasted its database...")
+            #print(self.nodeName, " has broadcasted its database...")
             time.sleep(30)
 
 
@@ -110,18 +109,15 @@ class Node:
         while True:
             data, addr = self.sock.recvfrom(10240)
             nodeName = data.decode("utf-8")
-            print(time.time(), "::Received message in handleDiscovery: ", nodeName, " from IP: ", addr)
+            #print(time.time(), "::Received message in handleDiscovery: ", nodeName, " from IP: ", addr)
             self.nodeTimestampList[nodeName] = time.time()
-            print("handleDiscovery IP Address List: ",self.nodeTimestampList)
+            #print("handleDiscovery IP Address List: ",self.nodeTimestampList)
             if addr not in list(self.nodeTimestampList):
                 self.discoverDB[nodeName] = list()
                 values = [addr, 1]
                 self.discoverDB[nodeName].extend(values)
                 
-            print("Node ", self.nodeName, "connected to: ", self.discoverDB[nodeName])
             detail = self.discoverDB[nodeName]
-            print(detail[0])
-            print(detail[1])
 
     def generateSensorData(self):
         hostname = socket.gethostname()
@@ -142,7 +138,7 @@ class Node:
                 self.detectPoacher(data)
 
     def detectPoacher(self, data):
-        print("SENSOR DATA RECIEVED")
+        #print("SENSOR DATA RECIEVED")
         sensorJson = data.decode("utf-8")
         if (sensorJson[:14] == "Recieved Image"):
             if( sensorJson.find('Poacher') != -1 ):
@@ -157,7 +153,7 @@ class Node:
         while(True):
             currTime = time.time()
             for addr in list(self.nodeTimestampList):
-                print("checkNodes:: Checking if node ", addr, " is present...")
+                #print("checkNodes:: Checking if node ", addr, " is present...")
                 if currTime - self.nodeTimestampList[addr] > 180:
                     #Remove the address and timestamp from the list
                     print("Removing node ", addr, " from list, as difference between timestamps is: ", currTime - self.nodeTimestampList[addr])
@@ -201,8 +197,6 @@ class Node:
         SensorThread.setDaemon(True)
         SensorThread.start()
             
-        print("[STARTING] server is starting...")
-        
         checkNodesThread = threading.Thread(target=self.checkNodes)
         checkNodesThread.setDaemon(True)
         checkNodesThread.start()
@@ -229,7 +223,7 @@ class Node:
         while(True):
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
             self.sock.sendto(self.nodeName.encode('utf-8'), (self.mcast_grp, MCAST_DISC_PORT))
-            print(self.nodeName, " has broadcasted...")
+            #print(self.nodeName, " has broadcasted...")
             time.sleep(30)
 
     def unicastNode(self, strMsg, nodeName):
